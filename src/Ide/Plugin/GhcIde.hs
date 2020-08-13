@@ -67,4 +67,4 @@ documentSymbolsProvider ls ide params = do
 -- ---------------------------------------------------------------------
 
 workspaceSymbolsProvider :: WorkspaceSymbolsProvider
-workspaceSymbolsProvider _ls _ide _params = return $ Right []
+workspaceSymbolsProvider ls ide params = workspaceOutline ls ide params

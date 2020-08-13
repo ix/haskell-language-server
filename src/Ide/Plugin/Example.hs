@@ -211,7 +211,7 @@ documentSymbols _lf _ide (DocumentSymbolParams _doc _mt)
 -- ---------------------------------------------------------------------
 
 workspaceSymbols :: WorkspaceSymbolsProvider
-workspaceSymbols _lf _ide (WorkspaceSymbolParams _query _wdt) = pure $ Right [r]
+workspaceSymbols _lf _ide (WorkspaceSymbolParams _query _wdt) = pure $ Right $ List [r]
   where 
     r = SymbolInformation name kind deprecated location containerName
     name = "Example_workspace_symbol_name"

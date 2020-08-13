@@ -171,7 +171,7 @@ type DocumentSymbolsProvider = LSP.LspFuncs Config
                      -> IO (Either ResponseError [DocumentSymbol])
 
 type WorkspaceSymbolsProvider = 
-    LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError [SymbolInformation])
+    LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError (List SymbolInformation))
 
 type ExecuteCommandProvider = IdeState
                             -> ExecuteCommandParams
