@@ -480,9 +480,11 @@ workspaceSymbolsHandlers hps = PartialHandlers $ \WithMessage{..} x ->
   return x {LSP.workspaceSymbolHandler = withResponse RspWorkspaceSymbols (workspaceSymbols hps)}
 
 workspaceSymbols :: [(PluginId, WorkspaceSymbolsProvider)] -> LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError (List SymbolInformation))
-workspaceSymbols _ _ _ _ = do
-  pure $ Right $ List []
-
+workspaceSymbols plugins lf ideState params = do
+  maybeSymbols <- mapM (\(_, p) -> p lf ideState params) plugins
+  case rights maybeSymbols of
+    []   -> return $ Left $ responseError $ T.pack $ show $ lefts maybeSymbols
+    syms -> return $ Right $ List $ concat syms
 -- ---------------------------------------------------------------------
 -- ---------------------------------------------------------------------
 
