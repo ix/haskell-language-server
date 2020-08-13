@@ -57,14 +57,15 @@ asGhcIdePlugin :: IdePlugins -> Plugin Config
 asGhcIdePlugin mp =
     mkPlugin rulesPlugins (Just . pluginRules) <>
     mkPlugin executeCommandPlugins (Just . pluginCommands) <>
-    mkPlugin codeActionPlugins     pluginCodeActionProvider <>
-    mkPlugin codeLensPlugins       pluginCodeLensProvider <>
+    mkPlugin codeActionPlugins      pluginCodeActionProvider <>
+    mkPlugin codeLensPlugins        pluginCodeLensProvider <>
     -- Note: diagnostics are provided via Rules from pluginDiagnosticProvider
-    mkPlugin hoverPlugins          pluginHoverProvider <>
-    mkPlugin symbolsPlugins        pluginSymbolsProvider <>
-    mkPlugin formatterPlugins      pluginFormattingProvider <>
-    mkPlugin completionsPlugins    pluginCompletionProvider <>
-    mkPlugin renamePlugins         pluginRenameProvider
+    mkPlugin hoverPlugins           pluginHoverProvider <>
+    mkPlugin documentSymbolsPlugins pluginDocumentSymbolsProvider <>
+    mkPlugin workspaceSymbolsPlugins pluginWorkspaceSymbolsProvider <>
+    mkPlugin formatterPlugins       pluginFormattingProvider <>
+    mkPlugin completionsPlugins     pluginCompletionProvider <>
+    mkPlugin renamePlugins          pluginRenameProvider
     where
         justs (p, Just x)  = [(p, x)]
         justs (_, Nothing) = []
@@ -428,20 +429,17 @@ makeHover hps _lf ideState params
 -- ---------------------------------------------------------------------
 -- ---------------------------------------------------------------------
 
-symbolsPlugins :: [(PluginId, SymbolsProvider)] -> Plugin Config
-symbolsPlugins hs = Plugin symbolsRules (symbolsHandlers hs)
+documentSymbolsPlugins :: [(PluginId, DocumentSymbolsProvider)] -> Plugin Config
+documentSymbolsPlugins hs = Plugin documentSymbolsRules (documentSymbolsHandlers hs)
 
-symbolsRules :: Rules ()
-symbolsRules = mempty
+documentSymbolsRules :: Rules ()
+documentSymbolsRules = mempty
 
-symbolsHandlers :: [(PluginId, SymbolsProvider)] -> PartialHandlers Config
-symbolsHandlers hps = PartialHandlers $ \WithMessage{..} x ->
-  return x 
-    { LSP.documentSymbolHandler = withResponse RspDocumentSymbols (documentSymbols hps) 
-    , LSP.workspaceSymbolHandler = withResponse RspWorkspaceSymbols (workspaceSymbols hps)
-    }
+documentSymbolsHandlers :: [(PluginId, DocumentSymbolsProvider)] -> PartialHandlers Config
+documentSymbolsHandlers hps = PartialHandlers $ \WithMessage{..} x ->
+  return x {LSP.documentSymbolHandler = withResponse RspDocumentSymbols (documentSymbols hps)}
 
-documentSymbols :: [(PluginId, SymbolsProvider)]
+documentSymbols :: [(PluginId, DocumentSymbolsProvider)]
       -> LSP.LspFuncs Config
       -> IdeState
       -> DocumentSymbolParams
@@ -471,8 +469,17 @@ documentSymbols sps lf ideState params
           [] -> return $ Left $ responseError $ T.pack $ show $ lefts mhs
           hs -> return $ Right $ convertSymbols $ concat hs
 
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
-workspaceSymbols :: [(PluginId, SymbolsProvider)] -> LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError (List SymbolInformation))
+workspaceSymbolsPlugins :: [(PluginId, WorkspaceSymbolsProvider)] -> Plugin Config
+workspaceSymbolsPlugins hs = Plugin mempty (workspaceSymbolsHandlers hs)
+
+workspaceSymbolsHandlers :: [(PluginId, WorkspaceSymbolsProvider)] -> PartialHandlers Config
+workspaceSymbolsHandlers hps = PartialHandlers $ \WithMessage{..} x ->
+  return x {LSP.workspaceSymbolHandler = withResponse RspWorkspaceSymbols (workspaceSymbols hps)}
+
+workspaceSymbols :: [(PluginId, WorkspaceSymbolsProvider)] -> LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError (List SymbolInformation))
 workspaceSymbols _ _ _ _ = do
   pure $ Right $ List []
 

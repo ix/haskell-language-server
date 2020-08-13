@@ -45,11 +45,12 @@ descriptor :: PluginId -> PluginDescriptor
 descriptor plId = (defaultPluginDescriptor plId)
   { pluginRules = exampleRules
   , pluginCommands = [PluginCommand "codelens.todo" "example adding" addTodoCmd]
-  , pluginCodeActionProvider = Just codeAction
-  , pluginCodeLensProvider   = Just codeLens
-  , pluginHoverProvider      = Just hover
-  , pluginSymbolsProvider    = Just symbols
-  , pluginCompletionProvider = Just completion
+  , pluginCodeActionProvider       = Just codeAction
+  , pluginCodeLensProvider         = Just codeLens
+  , pluginHoverProvider            = Just hover
+  , pluginDocumentSymbolsProvider  = Just documentSymbols
+  , pluginWorkspaceSymbolsProvider = Just workspaceSymbols
+  , pluginCompletionProvider       = Just completion
   }
 
 -- ---------------------------------------------------------------------
@@ -194,18 +195,30 @@ logAndRunRequest label getResults ide pos path = do
 
 -- ---------------------------------------------------------------------
 
-symbols :: SymbolsProvider
-symbols _lf _ide (DocumentSymbolParams _doc _mt)
+documentSymbols :: DocumentSymbolsProvider
+documentSymbols _lf _ide (DocumentSymbolParams _doc _mt)
     = pure $ Right [r]
     where
         r = DocumentSymbol name detail kind deprecation range selR chList
-        name = "Example_symbol_name"
+        name = "Example_document_symbol_name"
         detail = Nothing
         kind = SkVariable
         deprecation = Nothing
         range = Range (Position 2 0) (Position 2 5)
         selR = range
         chList = Nothing
+
+-- ---------------------------------------------------------------------
+
+workspaceSymbols :: WorkspaceSymbolsProvider
+workspaceSymbols _lf _ide (WorkspaceSymbolParams _query _wdt) = pure $ Right [r]
+  where 
+    r = SymbolInformation name kind deprecated location containerName
+    name = "Example_workspace_symbol_name"
+    kind = SkVariable
+    deprecated = Nothing 
+    location = Location (Uri "Example.hs") (Range (Position 0 0) (Position 0 0))
+    containerName = Nothing
 
 -- ---------------------------------------------------------------------
 

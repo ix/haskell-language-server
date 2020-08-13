@@ -22,11 +22,12 @@ import Text.Regex.TDFA.Text()
 descriptor :: PluginId -> PluginDescriptor
 descriptor plId = (defaultPluginDescriptor plId)
   { pluginCommands = [PluginCommand (CommandId "typesignature.add") "adds a signature" commandAddSignature]
-  , pluginCodeActionProvider = Just codeAction'
-  , pluginCodeLensProvider   = Just codeLens'
-  , pluginHoverProvider      = Just hover'
-  , pluginSymbolsProvider    = Just symbolsProvider
-  , pluginCompletionProvider = Just getCompletionsLSP
+  , pluginCodeActionProvider       = Just codeAction'
+  , pluginCodeLensProvider         = Just codeLens'
+  , pluginHoverProvider            = Just hover'
+  , pluginDocumentSymbolsProvider  = Just documentSymbolsProvider
+  , pluginWorkspaceSymbolsProvider = Just workspaceSymbolsProvider
+  , pluginCompletionProvider       = Just getCompletionsLSP
   }
 
 -- ---------------------------------------------------------------------
@@ -54,13 +55,16 @@ codeLens' lf ide _ params = codeLens lf ide params
 
 -- ---------------------------------------------------------------------
 
-symbolsProvider :: SymbolsProvider
-symbolsProvider ls ide params = do
+documentSymbolsProvider :: DocumentSymbolsProvider
+documentSymbolsProvider ls ide params = do
     ds <- moduleOutline ls ide params
     case ds of
         Right (DSDocumentSymbols (List ls)) -> return $ Right ls
         Right (DSSymbolInformation (List _si)) ->
-            return $ Left $ responseError "GhcIde.symbolsProvider: DSSymbolInformation deprecated"
+            return $ Left $ responseError "GhcIde.documentSymbolsProvider: DSSymbolInformation deprecated"
         Left err -> return $ Left err
 
 -- ---------------------------------------------------------------------
+
+workspaceSymbolsProvider :: WorkspaceSymbolsProvider
+workspaceSymbolsProvider _ls _ide _params = return $ Right []

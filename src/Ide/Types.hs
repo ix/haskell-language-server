@@ -12,7 +12,8 @@ module Ide.Types
     , CommandId(..)
     , DiagnosticProvider(..)
     , DiagnosticProviderFunc(..)
-    , SymbolsProvider
+    , DocumentSymbolsProvider
+    , WorkspaceSymbolsProvider
     , FormattingType(..)
     , FormattingProvider
     , HoverProvider
@@ -47,19 +48,20 @@ newtype IdePlugins = IdePlugins
 -- ---------------------------------------------------------------------
 
 data PluginDescriptor =
-  PluginDescriptor { pluginId                 :: !PluginId
-                   , pluginRules              :: !(Rules ())
-                   , pluginCommands           :: ![PluginCommand]
-                   , pluginCodeActionProvider :: !(Maybe CodeActionProvider)
-                   , pluginCodeLensProvider   :: !(Maybe CodeLensProvider)
-                   , pluginDiagnosticProvider :: !(Maybe DiagnosticProvider)
+  PluginDescriptor { pluginId                       :: !PluginId
+                   , pluginRules                    :: !(Rules ())
+                   , pluginCommands                 :: ![PluginCommand]
+                   , pluginCodeActionProvider       :: !(Maybe CodeActionProvider)
+                   , pluginCodeLensProvider         :: !(Maybe CodeLensProvider)
+                   , pluginDiagnosticProvider       :: !(Maybe DiagnosticProvider)
                      -- ^ TODO: diagnostics are generally provided via rules,
                      -- this is probably redundant.
-                   , pluginHoverProvider      :: !(Maybe HoverProvider)
-                   , pluginSymbolsProvider    :: !(Maybe SymbolsProvider)
-                   , pluginFormattingProvider :: !(Maybe (FormattingProvider IO))
-                   , pluginCompletionProvider :: !(Maybe CompletionProvider)
-                   , pluginRenameProvider     :: !(Maybe RenameProvider)
+                   , pluginHoverProvider            :: !(Maybe HoverProvider)
+                   , pluginDocumentSymbolsProvider  :: !(Maybe DocumentSymbolsProvider)
+                   , pluginWorkspaceSymbolsProvider :: !(Maybe WorkspaceSymbolsProvider)
+                   , pluginFormattingProvider       :: !(Maybe (FormattingProvider IO))
+                   , pluginCompletionProvider       :: !(Maybe CompletionProvider)
+                   , pluginRenameProvider           :: !(Maybe RenameProvider)
                    }
 
 defaultPluginDescriptor :: PluginId -> PluginDescriptor
@@ -68,6 +70,7 @@ defaultPluginDescriptor plId =
     plId
     mempty
     mempty
+    Nothing
     Nothing
     Nothing
     Nothing
@@ -162,10 +165,13 @@ data DiagnosticTrigger = DiagnosticOnOpen
 -- type HoverProvider = Uri -> Position -> IO (Either ResponseError [Hover])
 type HoverProvider = IdeState -> TextDocumentPositionParams -> IO (Either ResponseError (Maybe Hover))
 
-type SymbolsProvider = LSP.LspFuncs Config
+type DocumentSymbolsProvider = LSP.LspFuncs Config
                      -> IdeState
                      -> DocumentSymbolParams
                      -> IO (Either ResponseError [DocumentSymbol])
+
+type WorkspaceSymbolsProvider = 
+    LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError [SymbolInformation])
 
 type ExecuteCommandProvider = IdeState
                             -> ExecuteCommandParams
