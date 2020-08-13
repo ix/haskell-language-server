@@ -436,14 +436,17 @@ symbolsRules = mempty
 
 symbolsHandlers :: [(PluginId, SymbolsProvider)] -> PartialHandlers Config
 symbolsHandlers hps = PartialHandlers $ \WithMessage{..} x ->
-  return x {LSP.documentSymbolHandler = withResponse RspDocumentSymbols (makeSymbols hps)}
+  return x 
+    { LSP.documentSymbolHandler = withResponse RspDocumentSymbols (documentSymbols hps) 
+    , LSP.workspaceSymbolHandler = withResponse RspWorkspaceSymbols (workspaceSymbols hps)
+    }
 
-makeSymbols :: [(PluginId, SymbolsProvider)]
+documentSymbols :: [(PluginId, SymbolsProvider)]
       -> LSP.LspFuncs Config
       -> IdeState
       -> DocumentSymbolParams
       -> IO (Either ResponseError DSResult)
-makeSymbols sps lf ideState params
+documentSymbols sps lf ideState params
   = do
       let uri' = params ^. textDocument . uri
           (C.ClientCapabilities _ tdc _ _) = LSP.clientCapabilities lf
@@ -468,6 +471,10 @@ makeSymbols sps lf ideState params
           [] -> return $ Left $ responseError $ T.pack $ show $ lefts mhs
           hs -> return $ Right $ convertSymbols $ concat hs
 
+
+workspaceSymbols :: [(PluginId, SymbolsProvider)] -> LSP.LspFuncs Config -> IdeState -> WorkspaceSymbolParams -> IO (Either ResponseError (List SymbolInformation))
+workspaceSymbols _ _ _ _ = do
+  pure $ Right $ List []
 
 -- ---------------------------------------------------------------------
 -- ---------------------------------------------------------------------
